@@ -63,6 +63,18 @@ test('default classifyPrunableFile still treats darwin prebuilds as foreign on W
 
 test('electron-builder Arch enum 3 maps to darwin arm64', () => {
   assert.deepEqual(
+    packingTargetFromContext({ electronPlatformName: 'darwin', arch: 1 }),
+    { platform: 'darwin', arch: 'x64' },
+  )
+  assert.equal(
+    classifyPrunableFile('node-pty/prebuilds/darwin-x64/pty.node', { platform: 'darwin', arch: 'x64' }),
+    undefined,
+  )
+  assert.equal(
+    classifyPrunableFile('node-pty/prebuilds/darwin-arm64/pty.node', { platform: 'darwin', arch: 'x64' }),
+    'foreign-native-binary',
+  )
+  assert.deepEqual(
     packingTargetFromContext({ electronPlatformName: 'darwin', arch: 3 }),
     DARWIN_ARM64,
   )

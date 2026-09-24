@@ -80,11 +80,12 @@ release.yml：推送 vX.Y.Z tag 触发发布，tag 是版本唯一来源，
 `scripts/verify-version.mjs` 在发布前校验每个包版本与 tag 一致。
 
 Desktop 三端验证遵循原生平台边界：Windows 开发机只做通用检查和 Windows
-本地测试、打包、安装验收；macOS arm64 统一由 `macos-preview.yml` 或
-`desktop-three-platform-release.yml` 的 macOS Runner 验证；Linux x64 统一由
+本地测试、打包、安装验收；macOS arm64 由 `macos-preview.yml` 或
+`desktop-three-platform-release.yml` 的 Apple Silicon Runner（`macos-15`）验证，
+macOS x64 由同一工作流的 Intel Runner（`macos-15-intel`）验证；Linux x64 统一由
 `linux-preview.yml` 或 `desktop-three-platform-release.yml` 的 Linux Runner
 验证。WSL、容器、交叉打包和静态检查不能替代对应平台的原生工作流结论。
-三端 Release 只能在三个原生 job 与资产校验全部成功后发布。
+三端 Release 只能在 Windows、macOS arm64、macOS x64 与 Linux 原生 job 及资产校验全部成功后发布。
 
 ## 文档纪律
 

@@ -144,6 +144,56 @@ jobs:
             apps/dsh-desktop/dist/DeepSeek-Harness-Desktop-*-arm64.zip
             apps/dsh-desktop/dist/SHA256SUMS-macos.txt
 
+  macos-x64:
+    needs: metadata
+    runs-on: macos-15-intel
+    timeout-minutes: 120
+    env:
+      REQUIRE_SIGNING: 'false'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      DSH_DESKTOP_UPDATE_CHANNEL: stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: test "$(uname -m)" = x86_64
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @linxin666/dsh-desktop exec playwright install chromium
+      - run: pnpm verify
+      - run: pnpm feature-baseline:check
+      - name: Configure anonymous product metrics
+        env:
+          DSH_TELEMETRY_ENDPOINT: ${{ vars.DSH_TELEMETRY_ENDPOINT }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { writeFile } from 'node:fs/promises'
+          const endpoint = new URL(process.env.DSH_TELEMETRY_ENDPOINT)
+          if (endpoint.protocol !== 'https:' || endpoint.pathname !== '/v1/events' || endpoint.search || endpoint.hash || endpoint.username || endpoint.password) throw new Error('Invalid telemetry endpoint')
+          await writeFile('apps/dsh-desktop/build/telemetry-config.json', JSON.stringify({ endpoint: endpoint.href, officialBuild: true }, null, 2) + '\n')
+          NODE
+      - run: pnpm --filter @linxin666/dsh-desktop pack:mac:x64
+      - run: pnpm --filter @linxin666/dsh-desktop pack:verify:mac:x64
+      - run: pnpm --filter @linxin666/dsh-desktop pack:smoke:mac:x64
+      - name: Verify unsigned Preview and checksums
+        working-directory: apps/dsh-desktop/dist
+        run: |
+          set -euo pipefail
+          if codesign -dv --verbose=4 'mac/DeepSeek Harness Desktop.app' 2>&1 | grep -q '^Authority=Developer ID Application'; then exit 1; fi
+          shasum -a 256 DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.dmg DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.zip > SHA256SUMS-macos-x64.txt
+          shasum -a 256 -c SHA256SUMS-macos-x64.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ needs.metadata.outputs.version }}-macos-x64-preview
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            apps/dsh-desktop/dist/DeepSeek-Harness-Desktop-*-x64.dmg
+            apps/dsh-desktop/dist/DeepSeek-Harness-Desktop-*-x64.zip
+            apps/dsh-desktop/dist/SHA256SUMS-macos-x64.txt
+
   linux:
     needs: metadata
     runs-on: ubuntu-22.04
@@ -202,7 +252,7 @@ jobs:
             apps/dsh-desktop/dist/SHA256SUMS-linux.txt
 
   publish:
-    needs: [metadata, windows, macos, linux]
+    needs: [metadata, windows, macos, macos-x64, linux]
     if: needs.metadata.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -219,9 +269,11 @@ jobs:
           test -f DeepSeek-Harness-Desktop-Setup-${{ needs.metadata.outputs.version }}-x64.exe
           test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.dmg
           test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.zip
+          test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.dmg
+          test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.zip
           test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x86_64.AppImage
           test -f DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-amd64.deb
-          sha256sum DeepSeek-Harness-Desktop-Setup-${{ needs.metadata.outputs.version }}-x64.exe DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.dmg DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.zip DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x86_64.AppImage DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-amd64.deb > SHA256SUMS.txt
+          sha256sum DeepSeek-Harness-Desktop-Setup-${{ needs.metadata.outputs.version }}-x64.exe DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.dmg DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-arm64.zip DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.dmg DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x64.zip DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-x86_64.AppImage DeepSeek-Harness-Desktop-${{ needs.metadata.outputs.version }}-amd64.deb > SHA256SUMS.txt
           sha256sum -c SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:

@@ -54,10 +54,10 @@ PRIVATE，也不得为了推送改变仓库可见性。推送前须核验远程 
 ## 三端测试与打包边界
 
 - **Windows 本地只验证 Windows**：维护者的 Windows 开发机仅执行通用源码检查、Windows 单测/E2E、Windows 安装包构建与真实安装验收；本地结果不得写成 macOS 或 Linux 已通过。
-- **macOS 统一走原生 GitHub Actions Runner**：macOS arm64 的测试、打包、产物校验和启动冒烟必须由 `.github/workflows/macos-preview.yml` 或 `.github/workflows/desktop-three-platform-release.yml` 的 macOS job 完成，以对应 Action 日志和上传产物为验收证据。
+- **macOS 统一走原生 GitHub Actions Runner**：macOS arm64 的测试、打包、产物校验和启动冒烟必须由 `.github/workflows/macos-preview.yml` 或 `.github/workflows/desktop-three-platform-release.yml` 的 Apple Silicon job（`macos-15`）完成；macOS x64 必须由同一工作流的 Intel job（`macos-15-intel`）完成。验收证据是对应 Action 日志和上传产物。
 - **Linux 统一走原生 GitHub Actions Runner**：Linux x64 的测试、打包、沙箱校验和 Xvfb 启动冒烟必须由 `.github/workflows/linux-preview.yml` 或 `.github/workflows/desktop-three-platform-release.yml` 的 Linux job 完成，以对应 Action 日志和上传产物为验收证据。
 - **禁止伪造跨平台通过结论**：不得在 Windows 上通过 WSL、容器、交叉打包、修改 `process.platform` 或只跑静态检查来宣称 macOS/Linux 已通过；失败时应修复代码并重跑相应原生工作流，不得绕过、跳过或降低平台门禁。
-- **三端发布以工作流汇总为准**：只有 Windows、macOS、Linux 三个原生 job 全部成功且 Release 资产校验完成，才可宣称三端发布完成；任一平台失败时不得创建或宣传部分成功的正式三端发布。
+- **三端发布以工作流汇总为准**：只有 Windows、macOS arm64、macOS x64 与 Linux 的原生 job 全部成功且 Release 资产校验完成，才可宣称三端发布完成；任一平台或架构失败时不得创建或宣传部分成功的正式三端发布。
 
 ## Windows 本地磁盘空间边界
 

@@ -93,6 +93,7 @@ async function createMacFixture(root, {
   locales = ['en.lproj', 'zh_CN.lproj', 'zh_TW.lproj'],
   infoPlist = sampleInfoPlist(),
   extraFiles = {},
+  arch = 'arm64',
 } = {}) {
   const bundleRoot = join(root, `${PRODUCT_FILENAME}.app`)
   const resources = join(bundleRoot, 'Contents', 'Resources')
@@ -108,10 +109,10 @@ async function createMacFixture(root, {
     files[`Contents/Frameworks/Electron Framework.framework/Resources/${locale}/locale.pak`] = locale
   }
   if (includePtyNode) {
-    files['Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-arm64/pty.node'] = 'pty'
+    files[`Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-${arch}/pty.node`] = 'pty'
   }
   if (includeSpawnHelper) {
-    files['Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-arm64/spawn-helper'] = 'helper'
+    files[`Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-${arch}/spawn-helper`] = 'helper'
   }
   for (const prebuild of foreignPrebuilds) {
     files[`Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/${prebuild}`] = 'foreign'
@@ -145,7 +146,7 @@ test('Windows verify-package arguments stay win32-x64 by default', () => {
   )
 })
 
-test('darwin verify-package arguments default to arm64 and reject Intel', () => {
+test('darwin verify-package arguments default to arm64 and accept x64', () => {
   assert.deepEqual(parseVerifyPackageArguments(['--platform', 'darwin']), {
     allowMissingUpdateMetadata: false,
     platform: 'darwin',
@@ -168,9 +169,15 @@ test('darwin verify-package arguments default to arm64 and reject Intel', () => 
       resourcesArgument: '/tmp/DeepSeek Harness Desktop.app',
     },
   )
+  assert.deepEqual(parseVerifyPackageArguments(['--platform', 'darwin', '--arch', 'x64']), {
+    allowMissingUpdateMetadata: false,
+    platform: 'darwin',
+    arch: 'x64',
+    resourcesArgument: undefined,
+  })
   assert.throws(
-    () => parseVerifyPackageArguments(['--platform', 'darwin', '--arch', 'x64']),
-    /only supports arm64/u,
+    () => parseVerifyPackageArguments(['--platform', 'darwin', '--arch', 'ia32']),
+    /only supports arm64 or x64/u,
   )
   assert.throws(
     () => parseVerifyPackageArguments(['--platform', 'win32', '--arch', 'arm64']),
@@ -190,12 +197,22 @@ test('mac resources path resolves .app bundles and prefers dist/mac-arm64', () =
     darwinResourcesCandidates(appDirectory),
     [
       join(appDirectory, 'dist', 'mac-arm64', `${PRODUCT_FILENAME}.app`, 'Contents', 'Resources'),
+    ],
+  )
+  assert.deepEqual(
+    darwinResourcesCandidates(appDirectory, PRODUCT_FILENAME, 'x64'),
+    [
       join(appDirectory, 'dist', 'mac', `${PRODUCT_FILENAME}.app`, 'Contents', 'Resources'),
+      join(appDirectory, 'dist', 'mac-x64', `${PRODUCT_FILENAME}.app`, 'Contents', 'Resources'),
     ],
   )
   assert.equal(
     defaultPackagedResourcesPath(appDirectory, { platform: 'darwin', arch: 'arm64' }),
     darwinResourcesCandidates(appDirectory)[0],
+  )
+  assert.equal(
+    defaultPackagedResourcesPath(appDirectory, { platform: 'darwin', arch: 'x64' }),
+    darwinResourcesCandidates(appDirectory, PRODUCT_FILENAME, 'x64')[0],
   )
   assert.equal(
     macBundleRootFromResources(join(resolve(appPath), 'Contents', 'Resources')),
@@ -277,6 +294,29 @@ test('mac packaged surface accepts a darwin-arm64 app bundle without MinGit', as
       appId: APP_ID,
       productName: PRODUCT_FILENAME,
     })
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('mac packaged surface accepts a darwin-x64 app and rejects an arm64 prebuild', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-verify-mac-x64-'))
+  try {
+    const fixture = await createMacFixture(root, { arch: 'x64' })
+    await verifyMacPackagedSurface({
+      ...fixture,
+      appId: APP_ID,
+      productName: PRODUCT_FILENAME,
+      arch: 'x64',
+    })
+    const mixed = await createMacFixture(join(root, 'mixed'), {
+      arch: 'x64',
+      foreignPrebuilds: ['darwin-arm64/pty.node'],
+    })
+    await assert.rejects(
+      verifyMacPackagedSurface({ ...mixed, appId: APP_ID, arch: 'x64' }),
+      /foreign prebuilds: darwin-arm64/u,
+    )
   } finally {
     await rm(root, { recursive: true, force: true })
   }

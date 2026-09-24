@@ -83,6 +83,14 @@ const REQUIRED_NATIVE_BINDINGS = Object.freeze({
     'lightningcss-darwin-arm64',
     'node-addon-require-builtin-darwin-arm64',
   ]),
+  'darwin-x64': Object.freeze([
+    '@img/sharp-darwin-x64',
+    '@img/sharp-libvips-darwin-x64',
+    '@koromix/koffi-darwin-x64',
+    '@vscode/ripgrep-darwin-x64',
+    'lightningcss-darwin-x64',
+    'node-addon-require-builtin-darwin-x64',
+  ]),
   'win32-x64': Object.freeze([
     '@img/sharp-win32-x64',
     '@koromix/koffi-win32-x64',
@@ -630,6 +638,7 @@ if (TARGET_PLATFORM.platform === 'darwin') {
     appId: packagingConfig.appId,
     productName: packagingConfig.productName,
     electronLanguages: packagingConfig.electronLanguages,
+    arch: TARGET_PLATFORM.arch,
   })
 }
 

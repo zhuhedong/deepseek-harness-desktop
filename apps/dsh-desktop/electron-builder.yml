@@ -85,13 +85,11 @@ mac:
   minimumSystemVersion: '11.0'
   darkModeSupport: true
   artifactName: DeepSeek-Harness-Desktop-${version}-${arch}.${ext}
+  # package-mac.mjs passes --arm64 or --x64. An arch list here is not filtered
+  # by those flags, so one invocation would build both architectures.
   target:
     - target: dmg
-      arch:
-        - arm64
     - target: zip
-      arch:
-        - arm64
 
 dmg:
   artifactName: DeepSeek-Harness-Desktop-${version}-${arch}.${ext}

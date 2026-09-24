@@ -46,8 +46,8 @@ export function parseVerifyPackageArguments(argv) {
   if (resolvedPlatform !== 'win32' && resolvedPlatform !== 'darwin' && resolvedPlatform !== 'linux') {
     throw new Error(`unsupported verify-package platform: ${resolvedPlatform}`)
   }
-  if (resolvedPlatform === 'darwin' && resolvedArch !== 'arm64') {
-    throw new Error('macOS package verification only supports arm64')
+  if (resolvedPlatform === 'darwin' && resolvedArch !== 'arm64' && resolvedArch !== 'x64') {
+    throw new Error('macOS package verification only supports arm64 or x64')
   }
   if (resolvedPlatform === 'win32' && resolvedArch !== 'x64') {
     throw new Error('Windows package verification only supports x64')
@@ -70,16 +70,16 @@ export function packagedResourcesPathFromArgument(resourcesArgument) {
   return candidate
 }
 
-export function darwinResourcesCandidates(appDir, productFilename = PRODUCT_FILENAME) {
+export function darwinResourcesCandidates(appDir, productFilename = PRODUCT_FILENAME, arch = 'arm64') {
   const appName = `${productFilename}.app`
-  return [
-    join(appDir, 'dist', 'mac-arm64', appName, 'Contents', 'Resources'),
-    join(appDir, 'dist', 'mac', appName, 'Contents', 'Resources'),
-  ]
+  const folders = arch === 'x64' ? ['mac', 'mac-x64'] : ['mac-arm64']
+  return folders.map((folder) => join(appDir, 'dist', folder, appName, 'Contents', 'Resources'))
 }
 
 export function defaultPackagedResourcesPath(appDir, target) {
-  if (target.platform === 'darwin') return darwinResourcesCandidates(appDir)[0]
+  if (target.platform === 'darwin') {
+    return darwinResourcesCandidates(appDir, PRODUCT_FILENAME, target.arch)[0]
+  }
   if (target.platform === 'linux') return join(appDir, 'dist', 'linux-unpacked', 'resources')
   return join(appDir, 'dist', 'win-unpacked', 'resources')
 }
@@ -91,7 +91,7 @@ export async function resolvePackagedResourcesPath({ appDir, parsed }) {
   if (parsed.platform !== 'darwin') {
     return defaultPackagedResourcesPath(appDir, parsed)
   }
-  const candidates = darwinResourcesCandidates(appDir)
+  const candidates = darwinResourcesCandidates(appDir, PRODUCT_FILENAME, parsed.arch)
   for (const candidate of candidates) {
     try {
       await access(candidate)
@@ -242,6 +242,7 @@ export async function verifyMacPackagedSurface({
   productName = PRODUCT_FILENAME,
   electronLanguages,
   maxBytes = MAC_APP_MAX_BYTES,
+  arch = 'arm64',
 }) {
   await access(join(bundleRoot, 'Contents', 'Info.plist'))
   await access(join(bundleRoot, 'Contents', 'MacOS', productName))
@@ -251,9 +252,13 @@ export async function verifyMacPackagedSurface({
   const infoPlistXml = await readFile(join(bundleRoot, 'Contents', 'Info.plist'), 'utf8')
   assertMacInfoPlist(infoPlistXml, { appId, productName })
 
+  if (arch !== 'arm64' && arch !== 'x64') {
+    throw new Error(`macOS package verification only supports arm64 or x64, received ${arch}`)
+  }
+  const nativePrebuild = `darwin-${arch}`
   const prebuildRoot = join(unpackedModules, 'node-pty', 'prebuilds')
   for (const artifact of REQUIRED_MAC_PTY_ARTIFACTS) {
-    await access(join(prebuildRoot, 'darwin-arm64', artifact))
+    await access(join(prebuildRoot, nativePrebuild, artifact))
   }
   let prebuildDirectories
   try {
@@ -268,7 +273,7 @@ export async function verifyMacPackagedSurface({
   }
   const foreignPrebuilds = []
   for (const name of prebuildDirectories) {
-    if (name === 'darwin-arm64') continue
+    if (name === nativePrebuild) continue
     const leftover = await readdir(join(prebuildRoot, name))
     if (leftover.length > 0) foreignPrebuilds.push(name)
   }

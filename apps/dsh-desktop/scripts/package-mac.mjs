@@ -14,12 +14,18 @@ const RELEASE_CHANNEL = defaultReleaseChannel({
   configuredChannel: process.env.DSH_DESKTOP_UPDATE_CHANNEL,
 })
 
-export function assertDarwinPackHost(platform = process.platform) {
+export function assertDarwinPackHost(platform = process.platform, { arch, hostArch = process.arch } = {}) {
   if (platform !== 'darwin') throw new Error('pack:mac only runs on macOS')
+  if (arch !== undefined && hostArch !== arch) {
+    throw new Error(`pack:mac ${arch} only runs on a native darwin-${arch} Mac`)
+  }
 }
 
 export function parsePackMacArguments(argv) {
-  return { dir: argv.includes('--dir') }
+  const wantsArm64 = argv.includes('--arm64')
+  const wantsX64 = argv.includes('--x64')
+  if (wantsArm64 && wantsX64) throw new Error('pack:mac accepts only one of --arm64 or --x64')
+  return { dir: argv.includes('--dir'), arch: wantsX64 ? 'x64' : 'arm64' }
 }
 
 export function electronBuilderCommand() {
@@ -31,20 +37,21 @@ export function electronBuilderPublishChannel(releaseChannel = RELEASE_CHANNEL) 
 }
 
 export function electronBuilderArgs(argv = [], releaseChannel = RELEASE_CHANNEL) {
-  const extra = argv.filter((argument) => argument !== '--dir')
+  const parsed = parsePackMacArguments(argv)
+  const extra = argv.filter((argument) => argument !== '--dir' && argument !== '--arm64' && argument !== '--x64')
   const args = [
     '--mac',
-    '--arm64',
+    parsed.arch === 'x64' ? '--x64' : '--arm64',
     '--publish',
     'never',
     `--config.publish.channel=${electronBuilderPublishChannel(releaseChannel)}`,
   ]
-  if (argv.includes('--dir')) args.push('--dir')
+  if (parsed.dir) args.push('--dir')
   args.push(...extra)
   return args
 }
 
-export function packEnvironment(env = process.env) {
+export function packEnvironment(env = process.env, arch = 'arm64') {
   const userAgent = env.npm_config_user_agent
   return {
     ...env,
@@ -54,7 +61,7 @@ export function packEnvironment(env = process.env) {
     // and drop optional darwin natives (sharp / koffi / lightningcss).
     npm_config_user_agent: typeof userAgent === 'string' && userAgent.includes('pnpm')
       ? userAgent
-      : 'pnpm/11.22.0 npm/? node/? darwin arm64',
+      : `pnpm/11.22.0 npm/? node/? darwin ${arch}`,
   }
 }
 
@@ -84,13 +91,19 @@ function run(command, args, env = process.env) {
 export async function packMac({
   argv = process.argv.slice(2),
   platform = process.platform,
+  hostArch = process.arch,
   runCommand = run,
   prepare = prepareReleaseDirectory,
   releaseChannel = RELEASE_CHANNEL,
 } = {}) {
-  assertDarwinPackHost(platform)
+  const parsed = parsePackMacArguments(argv)
+  assertDarwinPackHost(platform, { arch: parsed.arch, hostArch })
   await prepare()
-  await runCommand(electronBuilderCommand(), electronBuilderArgs(argv, releaseChannel), packEnvironment())
+  await runCommand(
+    electronBuilderCommand(),
+    electronBuilderArgs(argv, releaseChannel),
+    packEnvironment(process.env, parsed.arch),
+  )
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

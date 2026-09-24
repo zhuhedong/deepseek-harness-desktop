@@ -53,6 +53,34 @@ const REQUIRED_PACKAGED_NATIVE_BINDINGS = Object.freeze({
       resolveFrom: '@deepseek-ai/dsh',
     }),
   ]),
+  'darwin-x64': Object.freeze([
+    Object.freeze({
+      packageName: '@img/sharp-darwin-x64',
+      resolveFrom: 'sharp',
+      sourceFromEntry: Object.freeze(['..', '..', '@img', 'sharp-darwin-x64']),
+    }),
+    Object.freeze({
+      packageName: '@img/sharp-libvips-darwin-x64',
+      resolveFrom: 'sharp',
+      sourceFromEntry: Object.freeze(['..', '..', '@img', 'sharp-libvips-darwin-x64']),
+    }),
+    Object.freeze({
+      packageName: '@koromix/koffi-darwin-x64',
+      resolveFrom: 'koffi',
+    }),
+    Object.freeze({
+      packageName: '@vscode/ripgrep-darwin-x64',
+      resolveFrom: '@deepseek-ai/dsh',
+    }),
+    Object.freeze({
+      packageName: 'lightningcss-darwin-x64',
+      resolveFrom: '@linxin666/dsh-client-ui-skin-center',
+    }),
+    Object.freeze({
+      packageName: 'node-addon-require-builtin-darwin-x64',
+      resolveFrom: '@deepseek-ai/dsh',
+    }),
+  ]),
   'win32-x64': Object.freeze([
     Object.freeze({
       packageName: '@img/sharp-win32-x64',

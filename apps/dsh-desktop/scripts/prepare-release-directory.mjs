@@ -13,6 +13,7 @@ const GENERATED_RELEASE_FILES = new Set([
   'beta-linux.yml',
   'SHA256SUMS.txt',
   'SHA256SUMS-macos.txt',
+  'SHA256SUMS-macos-x64.txt',
   'SHA256SUMS-linux.txt',
   'release-manifest.json',
   'release-notes.md',
@@ -24,7 +25,7 @@ const GENERATED_RELEASE_FILES = new Set([
 function isGeneratedReleaseFile(name) {
   return GENERATED_RELEASE_FILES.has(name)
     || /^acceptance-evidence(?:-[0-9a-f]{7,40})?\.json$/u.test(name)
-    || /^DeepSeek-Harness-Desktop-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?-arm64\.(?:dmg|zip)(?:\.blockmap)?$/u.test(name)
+    || /^DeepSeek-Harness-Desktop-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?-(?:arm64|x64)\.(?:dmg|zip)(?:\.blockmap)?$/u.test(name)
     || /^DeepSeek-Harness-Desktop-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?-(?:x86_64\.AppImage|amd64\.deb)(?:\.blockmap)?$/u.test(name)
     || extname(name).toLowerCase() === '.exe'
     || name.toLowerCase().endsWith('.exe.blockmap')
@@ -51,7 +52,7 @@ export async function prepareReleaseDirectory(directory = DEFAULT_RELEASE_DIRECT
     removed.push(entry.name)
   }
 
-  for (const name of ['win-unpacked', 'mac', 'mac-arm64', 'linux-unpacked']) {
+  for (const name of ['win-unpacked', 'mac', 'mac-arm64', 'mac-x64', 'linux-unpacked']) {
     if (!entries.some((entry) => entry.isDirectory() && entry.name === name)) continue
     await rm(join(normalizedDirectory, name), { recursive: true, force: true })
     removed.push(name)

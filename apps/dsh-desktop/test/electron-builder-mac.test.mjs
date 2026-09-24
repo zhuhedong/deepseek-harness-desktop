@@ -12,7 +12,7 @@ async function readPackagingConfig() {
   return YAML.parse(await readFile(join(appDirectory, 'electron-builder.yml'), 'utf8'))
 }
 
-test('mac packaging is unsigned arm64 dmg+zip without Intel or universal targets', async () => {
+test('mac packaging is unsigned arm64 and x64 dmg+zip without a universal target', async () => {
   const config = await readPackagingConfig()
   assert.equal(config.mac.identity, null)
   assert.equal(config.mac.hardenedRuntime, false)
@@ -29,10 +29,10 @@ test('mac packaging is unsigned arm64 dmg+zip without Intel or universal targets
   assert.ok(Array.isArray(targets))
   assert.deepEqual(targets.map((entry) => entry.target).sort(), ['dmg', 'zip'])
   for (const entry of targets) {
-    assert.deepEqual(entry.arch, ['arm64'])
+    assert.equal(entry.arch, undefined)
   }
   const serialized = JSON.stringify(config.mac)
-  assert.equal(serialized.includes('x64'), false)
+  assert.equal(serialized.includes('"arch"'), false)
   assert.equal(serialized.includes('universal'), false)
   assert.equal(serialized.includes('ia32'), false)
 })

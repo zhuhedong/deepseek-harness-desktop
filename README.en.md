@@ -36,7 +36,7 @@ Join the community to discuss:
 
 DeepSeek has not yet released a standalone official Desktop product. This project already combines the public official **DSH Runtime, Web UI, and the Desktop boundaries visible in the official repository** into an installable Windows application, then adds community plugins, Skills, task automation, Git, remote development, and desktop integration. It is not an official DeepSeek client and does not reuse or overwrite a future official Desktop identity, data directory, protocol, or update feed.
 
-Supports **Windows 10 / 11 x64**, with **macOS Apple Silicon arm64 Preview** and **Linux x64 Preview** builds. It is released under the **BSD-3-Clause** license.
+Supports **Windows 10 / 11 x64**, with **macOS arm64 / x64 Preview** and **Linux x64 Preview** builds. It is released under the **BSD-3-Clause** license.
 
 The installer includes the main runtime components, so you do not need to separately configure Node.js, Git, or DSH.
 
@@ -325,9 +325,9 @@ The particle-whale theme can be applied not only to the startup page but also to
 
 The Windows installer already includes DSH, desktop plugins, skins, pnpm, MinGit, and the required native dependencies. Separate Node.js or Git setup is not required.
 
-### macOS unsigned preview (Apple Silicon)
+### macOS unsigned preview
 
-arm64 only. After downloading the `.dmg` or `.zip`, move the app to `/Applications` and clear quarantine with `xattr`. macOS 15 no longer has Right-click > Open. Preview builds have no auto-update and use system Git. Full steps: [macOS unsigned preview install guide](docs/macos-preview.md).
+Apple Silicon downloads the `-arm64` package. Intel Macs download the `-x64` package. After downloading the `.dmg` or `.zip`, move the app to `/Applications` and clear quarantine with `xattr`. macOS 15 no longer has Right-click > Open. Preview builds have no auto-update and use system Git. Full steps: [macOS unsigned preview install guide](docs/macos-preview.md).
 
 If GitHub downloads are slow in your region, you can also join the community group at the top of this page to get the synchronized installer.
 

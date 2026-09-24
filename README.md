@@ -36,7 +36,7 @@ QQ 群：**1105158177**
 
 DeepSeek 官方尚未正式发布独立 Desktop 产品；本项目已经把公开的官方 **DSH Runtime、Web UI 与官方仓库中的 Desktop 能力边界** 融合为可安装的 Windows 应用，并在独立社区宿主中补齐插件、Skills、任务自动化、Git、远程开发和桌面体验。它不是 DeepSeek 官方客户端，也不使用或覆盖未来官方 Desktop 的应用身份、数据目录与更新源。
 
-支持 **Windows 10 / 11 x64**；同时提供 **macOS Apple Silicon arm64 Preview** 与 **Linux x64 Preview**。项目采用 **BSD-3-Clause** 许可证。
+支持 **Windows 10 / 11 x64**；同时提供 **macOS arm64 / x64 Preview** 与 **Linux x64 Preview**。项目采用 **BSD-3-Clause** 许可证。
 
 安装包已包含主要运行组件，无需另外配置 Node.js、Git 或单独安装 DSH。
 
@@ -322,9 +322,9 @@ DeepSeek 官方尚未正式发布独立 Desktop 产品；本项目已经把公�
 
 Windows 安装包已经包含 DSH、桌面插件、皮肤、pnpm、MinGit 与所需原生依赖，不需要额外安装 Node.js 或 Git。
 
-### macOS 未签名预览（Apple Silicon）
+### macOS 未签名预览
 
-只提供 arm64。下载 `.dmg` 或 `.zip` 后把应用放到 `/Applications`，用 `xattr` 去掉隔离属性；macOS 15 起没有「右键打开」。预览版没有自动更新，mac 端使用系统 Git。完整步骤见 [macOS 未签名预览版安装说明](docs/macos-preview.zh.md)。
+Apple Silicon 下载 `-arm64`，Intel Mac 下载 `-x64`。下载 `.dmg` 或 `.zip` 后把应用放到 `/Applications`，用 `xattr` 去掉隔离属性；macOS 15 起没有「右键打开」。预览版没有自动更新，mac 端使用系统 Git。完整步骤见 [macOS 未签名预览版安装说明](docs/macos-preview.zh.md)。
 
 如果 GitHub 下载速度较慢，也可以加入页面顶部的用户交流群获取同步提供的安装包。
 

@@ -1,10 +1,10 @@
 # macOS 未签名预览版安装说明
 
-本文说明如何在 Apple Silicon Mac 上安装 **DeepSeek Harness Desktop** 的未签名贡献者预览包。正式 Windows 安装仍见根目录 [README.md](../README.md) 与 [desktop.md](desktop.md)。
+本文说明如何在 Apple Silicon 与 Intel Mac 上安装 **DeepSeek Harness Desktop** 的未签名贡献者预览包。正式 Windows 安装仍见根目录 [README.md](../README.md) 与 [desktop.md](desktop.md)。
 
 ## 适用与限制
 
-- 只支持 Apple Silicon（arm64）。Intel Mac 不能用，Rosetta 也无法反向兼容。
+- Apple Silicon 安装 arm64 包，Intel Mac 安装 x64 包。两份包不能互换：Rosetta 不能运行 arm64 包，Apple Silicon 也不能直接运行 x64 包。
 - 这是未签名预览包，不是正式发行版。不上 Mac App Store。
 - mac 端使用系统 Git，不内置 MinGit。若 `git --version` 不可用，请安装 Xcode Command Line Tools：`xcode-select --install`。
 - 预览版没有自动更新。应用内「检查更新」会说明原因；新版本请到 [GitHub Releases](https://github.com/ningbainb/deepseek-harness-desktop/releases) 手动下载。不要用 `/releases/latest`，预发布不会出现在 Latest 里。
@@ -12,7 +12,7 @@
 
 ## 安装
 
-1. 从 [GitHub Releases](https://github.com/ningbainb/deepseek-harness-desktop/releases) 下载 arm64 的 `.dmg` 或 `.zip`（文件名形如 `DeepSeek-Harness-Desktop-<version>-arm64.dmg`）。预览包的标题会标明未签名、仅供贡献者验证。
+1. 从 [GitHub Releases](https://github.com/ningbainb/deepseek-harness-desktop/releases) 下载与本机芯片匹配的 `.dmg` 或 `.zip`。Apple Silicon 文件名形如 `DeepSeek-Harness-Desktop-<version>-arm64.dmg`，Intel 文件名形如 `DeepSeek-Harness-Desktop-<version>-x64.dmg`。预览包的标题会标明未签名、仅供贡献者验证。
 2. 打开 `.dmg` 把 **DeepSeek Harness Desktop.app** 拖到 `/Applications`，或解压 `.zip` 后把 `.app` 放到 `/Applications`。
 3. 去掉隔离属性（下载来的未签名包几乎都会带 quarantine）：
 

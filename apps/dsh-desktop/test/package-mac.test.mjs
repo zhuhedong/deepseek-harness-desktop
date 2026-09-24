@@ -29,8 +29,10 @@ import {
 const appDirectory = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 test('pack:mac arguments default to a signed-off unsigned arm64 mac build', () => {
-  assert.deepEqual(parsePackMacArguments([]), { dir: false })
-  assert.deepEqual(parsePackMacArguments(['--dir']), { dir: true })
+  assert.deepEqual(parsePackMacArguments([]), { dir: false, arch: 'arm64' })
+  assert.deepEqual(parsePackMacArguments(['--dir']), { dir: true, arch: 'arm64' })
+  assert.deepEqual(parsePackMacArguments(['--x64', '--dir']), { dir: true, arch: 'x64' })
+  assert.throws(() => parsePackMacArguments(['--arm64', '--x64']), /only one of --arm64 or --x64/u)
   assert.deepEqual(
     electronBuilderArgs([]),
     ['--mac', '--arm64', '--publish', 'never', '--config.publish.channel=latest'],
@@ -38,6 +40,10 @@ test('pack:mac arguments default to a signed-off unsigned arm64 mac build', () =
   assert.deepEqual(
     electronBuilderArgs(['--dir']),
     ['--mac', '--arm64', '--publish', 'never', '--config.publish.channel=latest', '--dir'],
+  )
+  assert.deepEqual(
+    electronBuilderArgs(['--x64']),
+    ['--mac', '--x64', '--publish', 'never', '--config.publish.channel=latest'],
   )
   assert.equal(electronBuilderPublishChannel('stable'), 'latest')
   assert.equal(electronBuilderPublishChannel('beta'), 'beta')
@@ -49,6 +55,11 @@ test('pack:mac arguments default to a signed-off unsigned arm64 mac build', () =
   )
   assert.throws(() => assertDarwinPackHost('win32'), /only runs on macOS/u)
   assert.doesNotThrow(() => assertDarwinPackHost('darwin'))
+  assert.throws(
+    () => assertDarwinPackHost('darwin', { arch: 'x64', hostArch: 'arm64' }),
+    /native darwin-x64/u,
+  )
+  assert.doesNotThrow(() => assertDarwinPackHost('darwin', { arch: 'x64', hostArch: 'x64' }))
 })
 
 test('pack:mac never prepares MinGit or asserts Windows signing', async () => {
@@ -58,18 +69,24 @@ test('pack:mac never prepares MinGit or asserts Windows signing', async () => {
   assert.match(source, /CSC_IDENTITY_AUTO_DISCOVERY/u)
   assert.match(source, /--mac/u)
   assert.match(source, /--arm64/u)
+  assert.match(source, /--x64/u)
   assert.match(electronBuilderCommand(), /electron-builder$/u)
 
   const manifest = JSON.parse(await readFile(join(appDirectory, 'package.json'), 'utf8'))
   assert.match(manifest.scripts['pack:dir'], /^pnpm prepare:bundled-git && /u)
   assert.equal(manifest.scripts['pack:mac'], 'node scripts/package-mac.mjs')
   assert.equal(manifest.scripts['pack:mac:dir'], 'node scripts/package-mac.mjs --dir')
+  assert.equal(manifest.scripts['pack:mac:x64'], 'node scripts/package-mac.mjs --x64')
+  assert.equal(manifest.scripts['pack:mac:x64:dir'], 'node scripts/package-mac.mjs --x64 --dir')
+  assert.equal(manifest.scripts['pack:verify:mac:x64'], 'node scripts/verify-package.mjs --platform darwin --arch x64')
   assert.equal(manifest.scripts['pack:smoke:mac'], 'node scripts/verify-packaged-smoke-mac.mjs')
+  assert.equal(manifest.scripts['pack:smoke:mac:x64'], 'node scripts/verify-packaged-smoke-mac.mjs --x64')
 
   const calls = []
   await packMac({
     argv: ['--dir'],
     platform: 'darwin',
+    hostArch: 'arm64',
     releaseChannel: 'stable',
     prepare: async () => { calls.push('prepare') },
     runCommand: async (command, args, env) => {
@@ -82,6 +99,10 @@ test('pack:mac never prepares MinGit or asserts Windows signing', async () => {
   assert.equal(calls[1].args.includes('--config.publish.channel=latest'), true)
   assert.equal(calls[1].env.CSC_IDENTITY_AUTO_DISCOVERY, 'false')
   await assert.rejects(packMac({ platform: 'linux', prepare: async () => {} }), /only runs on macOS/u)
+  await assert.rejects(
+    packMac({ argv: ['--x64'], platform: 'darwin', hostArch: 'arm64', prepare: async () => {} }),
+    /native darwin-x64/u,
+  )
 })
 
 test('release directory preparation also removes mac staging folders', async () => {
@@ -109,7 +130,8 @@ test('release directory preparation also removes mac staging folders', async () 
 })
 
 test('mac packaged smoke resolves the .app executable and keeps homes off ~/.dsh', () => {
-  const [arm64, intelLayout] = packagedMacExecutableCandidates(appDirectory)
+  const [arm64] = packagedMacExecutableCandidates(appDirectory)
+  const [intelLayout] = packagedMacExecutableCandidates(appDirectory, 'x64')
   assert.equal(
     arm64,
     join(appDirectory, 'dist', 'mac-arm64', `${PRODUCT_FILENAME}.app`, 'Contents', 'MacOS', PRODUCT_FILENAME),
