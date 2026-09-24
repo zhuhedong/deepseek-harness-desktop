@@ -50,4 +50,6 @@ test('Linux CI smoke keeps the Chromium sandbox enabled with installed permissio
   assert.match(workflow, /sudo chmod 4755 "\$sandbox"/u)
   assert.match(workflow, /stat -c '%U:%G %a'/u)
   assert.doesNotMatch(workflow, /--no-sandbox/u)
+  assert.match(workflow, /DSH_TELEMETRY_ENDPOINT is unset; packaged preview keeps the inert telemetry config/u)
+  assert.doesNotMatch(workflow, /DSH_TELEMETRY_ENDPOINT is required/u)
 })

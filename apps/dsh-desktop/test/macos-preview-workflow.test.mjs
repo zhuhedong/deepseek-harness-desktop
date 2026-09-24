@@ -25,6 +25,8 @@ test('macOS preview workflow builds and smokes an isolated unsigned arm64 packag
   assert.match(workflow, /pnpm --filter @linxin666\/dsh-desktop pack:verify:mac:x64/u)
   assert.match(workflow, /pnpm --filter @linxin666\/dsh-desktop pack:smoke:mac:x64/u)
   assert.match(workflow, /SHA256SUMS-macos-x64\.txt/u)
+  assert.match(workflow, /DSH_TELEMETRY_ENDPOINT is unset; packaged preview keeps the inert telemetry config/u)
+  assert.doesNotMatch(workflow, /DSH_TELEMETRY_ENDPOINT is required/u)
   assert.doesNotMatch(workflow, /latest-mac\.yml/u)
   assert.doesNotMatch(workflow, /softprops\/action-gh-release/u)
 })

@@ -51,20 +51,23 @@ jobs:
           import { writeFile } from 'node:fs/promises'
 
           const endpointText = process.env.DSH_TELEMETRY_ENDPOINT?.trim()
-          if (!endpointText) throw new Error('Repository variable DSH_TELEMETRY_ENDPOINT is required')
-          const endpoint = new URL(endpointText)
-          if (endpoint.protocol !== 'https:'
-            || endpoint.pathname !== '/v1/events'
-            || endpoint.search !== ''
-            || endpoint.hash !== ''
-            || endpoint.username !== ''
-            || endpoint.password !== '') {
-            throw new Error('DSH_TELEMETRY_ENDPOINT must be a credential-free HTTPS URL ending exactly in /v1/events')
+          if (!endpointText) {
+            console.log('DSH_TELEMETRY_ENDPOINT is unset; packaged preview keeps the inert telemetry config.')
+          } else {
+            const endpoint = new URL(endpointText)
+            if (endpoint.protocol !== 'https:'
+              || endpoint.pathname !== '/v1/events'
+              || endpoint.search !== ''
+              || endpoint.hash !== ''
+              || endpoint.username !== ''
+              || endpoint.password !== '') {
+              throw new Error('DSH_TELEMETRY_ENDPOINT must be a credential-free HTTPS URL ending exactly in /v1/events')
+            }
+            await writeFile(
+              'apps/dsh-desktop/build/telemetry-config.json',
+              `${JSON.stringify({ endpoint: endpoint.href, officialBuild: true }, null, 2)}\n`,
+            )
           }
-          await writeFile(
-            'apps/dsh-desktop/build/telemetry-config.json',
-            `${JSON.stringify({ endpoint: endpoint.href, officialBuild: true }, null, 2)}\n`,
-          )
           NODE
       - name: Build unsigned Apple Silicon package
         run: pnpm --filter @linxin666/dsh-desktop pack:mac
@@ -144,20 +147,23 @@ jobs:
           import { writeFile } from 'node:fs/promises'
 
           const endpointText = process.env.DSH_TELEMETRY_ENDPOINT?.trim()
-          if (!endpointText) throw new Error('Repository variable DSH_TELEMETRY_ENDPOINT is required')
-          const endpoint = new URL(endpointText)
-          if (endpoint.protocol !== 'https:'
-            || endpoint.pathname !== '/v1/events'
-            || endpoint.search !== ''
-            || endpoint.hash !== ''
-            || endpoint.username !== ''
-            || endpoint.password !== '') {
-            throw new Error('DSH_TELEMETRY_ENDPOINT must be a credential-free HTTPS URL ending exactly in /v1/events')
+          if (!endpointText) {
+            console.log('DSH_TELEMETRY_ENDPOINT is unset; packaged preview keeps the inert telemetry config.')
+          } else {
+            const endpoint = new URL(endpointText)
+            if (endpoint.protocol !== 'https:'
+              || endpoint.pathname !== '/v1/events'
+              || endpoint.search !== ''
+              || endpoint.hash !== ''
+              || endpoint.username !== ''
+              || endpoint.password !== '') {
+              throw new Error('DSH_TELEMETRY_ENDPOINT must be a credential-free HTTPS URL ending exactly in /v1/events')
+            }
+            await writeFile(
+              'apps/dsh-desktop/build/telemetry-config.json',
+              `${JSON.stringify({ endpoint: endpoint.href, officialBuild: true }, null, 2)}\n`,
+            )
           }
-          await writeFile(
-            'apps/dsh-desktop/build/telemetry-config.json',
-            `${JSON.stringify({ endpoint: endpoint.href, officialBuild: true }, null, 2)}\n`,
-          )
           NODE
       - name: Build unsigned Intel package
         run: pnpm --filter @linxin666/dsh-desktop pack:mac:x64
